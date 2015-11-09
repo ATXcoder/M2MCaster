@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Plugin;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -16,6 +17,8 @@ namespace M2MCaster
 {
     public partial class Form1 : Form
     {
+        public Dictionary<string, IPlugin> _Plugins;
+
         public Form1()
         {
             InitializeComponent();
@@ -29,17 +32,34 @@ namespace M2MCaster
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            // Load plugins
+            string pluginPath = "path_to_plugin_folder";
+
+            PlugInLoader<IPlugin> loader = new PlugInLoader<IPlugin>(pluginPath);
+
+            _Plugins = new Dictionary<string, IPlugin>();
+
+            IEnumerable<IPlugin> plugins = loader.Plugins;
+
+            foreach(var plugin in plugins)
+            {
+                _Plugins.Add(plugin.Name, plugin);
+            }
+        }
+
+        private void ConnectToMQTT()
+        {
             string serverAddress = AppSettings.Default.server;
             int port = Convert.ToInt32(AppSettings.Default.port);
 
             // Connect to MQTT Broker
-            MqttClient client = new MqttClient(IPAddress.Parse(serverAddress), port, false, null ,MqttSslProtocols.None);
+            MqttClient client = new MqttClient(IPAddress.Parse(serverAddress), port, false, null, MqttSslProtocols.None);
 
             // register to message received 
-            client.MqttMsgPublishReceived += client_MqttMsgPublishReceived; 
+            client.MqttMsgPublishReceived += client_MqttMsgPublishReceived;
 
-            string clientId = Guid.NewGuid().ToString(); 
-            client.Connect(clientId); 
+            string clientId = Guid.NewGuid().ToString();
+            client.Connect(clientId);
 
             // subscribe to all topics with QoS 2 
             client.Subscribe(new string[] { "#" }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
@@ -50,8 +70,15 @@ namespace M2MCaster
         {
             string msg = System.Text.Encoding.UTF8.GetString(e.Message);
             string topic = e.Topic;
-            MessageBox.Show("Topic: " + topic + Environment.NewLine + msg);
-            return;
+
+            //Notify the plugins
+            foreach (var item in _Plugins)
+            {
+                IPlugin plug = _Plugins[item.Key];
+                plug.Message(topic, msg);
+                
+            }
         }
+
     }
 }
