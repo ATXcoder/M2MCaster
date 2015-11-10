@@ -62,9 +62,14 @@ namespace M2MCaster
             // register to message received 
             client.MqttMsgPublishReceived += client_MqttMsgPublishReceived;
 
-
-            client.Connect(Guid.NewGuid().ToString());
-            
+            try
+            {
+                client.Connect(Guid.NewGuid().ToString());
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.InnerException.Message,ex.Message);
+            }
 
             // subscribe to all topics with QoS 2 
             client.Subscribe(new string[] { "#" }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
@@ -109,8 +114,13 @@ namespace M2MCaster
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            client.Disconnect();
-            Console.WriteLine("Disconnecting");
+            // Check to see if we are connected and disconnect if we are
+            if (client.IsConnected)
+            {
+                client.Disconnect();
+                Console.WriteLine("Disconnecting"); //TODO: send to a real log file (log4net)
+            }
+                
         }
 
     }
