@@ -9,8 +9,9 @@ using System.ComponentModel.Composition.Hosting;
 namespace M2MCaster
 {
     public class PlugInLoader<T>
-        private CompositionContainer _Container;
     {
+        private CompositionContainer _Container;
+
         [ImportMany]
         public IEnumerable<T> Plugins
         {

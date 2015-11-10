@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.Btn_MQTT = new System.Windows.Forms.Button();
+            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.SuspendLayout();
             // 
             // Btn_MQTT
@@ -41,6 +42,11 @@
             this.Btn_MQTT.UseVisualStyleBackColor = true;
             this.Btn_MQTT.Click += new System.EventHandler(this.Btn_MQTT_Click);
             // 
+            // backgroundWorker1
+            // 
+            this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
+            this.backgroundWorker1.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker1_RunWorkerCompleted);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -49,6 +55,7 @@
             this.Controls.Add(this.Btn_MQTT);
             this.Name = "Form1";
             this.Text = "M2MCaster";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
             this.ResumeLayout(false);
 
@@ -57,6 +64,7 @@
         #endregion
 
         private System.Windows.Forms.Button Btn_MQTT;
+        private System.ComponentModel.BackgroundWorker backgroundWorker1;
 
     }
 }

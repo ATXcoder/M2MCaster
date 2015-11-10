@@ -70,5 +70,17 @@ namespace M2MCaster {
                 this["password"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string plugins {
+            get {
+                return ((string)(this["plugins"]));
+            }
+            set {
+                this["plugins"] = value;
+            }
+        }
     }
 }

@@ -9,7 +9,7 @@ using Plugin;
 namespace Plugin_CMD
 {
     [Export(typeof(IPlugin))] // Needed as we are using the MEF framework for plugins
-    public class CMD : IPlugin
+    public class Plugin_CMD : IPlugin
     {
         public void Message(string topic, string message)
         {
