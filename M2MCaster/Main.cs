@@ -12,16 +12,25 @@ using System.Windows.Forms;
 using uPLibrary.Networking.M2Mqtt;
 using uPLibrary.Networking.M2Mqtt.Messages;
 using System.IO;
+//Log4Net
+using log4net;
+using log4net.Config;
+
 
 
 namespace M2MCaster
 {
-    public partial class Form1 : Form
+
+    public partial class Main : Form
     {
         public Dictionary<string, IPlugin> _Plugins;
         public MqttClient client;
 
-        public Form1()
+        // Define a static logger variable so that it references the
+        // Logger instance named "Main".
+        private static readonly ILog log = LogManager.GetLogger(typeof(Main));
+
+        public Main()
         {
             InitializeComponent();
         }
@@ -34,6 +43,11 @@ namespace M2MCaster
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            XmlConfigurator.Configure();
+            log.Info("Starting M2MCaster");
+            string bdir = AppDomain.CurrentDomain.BaseDirectory;
+            MessageBox.Show(bdir);
+
             // Get the path to the plugins folder from settings
             string pluginPath = AppSettings.Default.plugins;
 
@@ -41,12 +55,10 @@ namespace M2MCaster
             if (!Directory.Exists(pluginPath)) 
             {
                 MessageBox.Show("Plugin folder not found. Please go to File > Settings > Plugins to browse for folder.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Debug("Plugin folder ( " + pluginPath + " ) not found");
             }
             else
             {
-               
-                
-
                 backgroundWorker1.RunWorkerAsync(pluginPath);
             }
         }
@@ -57,7 +69,8 @@ namespace M2MCaster
             int port = Convert.ToInt32(AppSettings.Default.port);
 
             client = new MqttClient(IPAddress.Parse(serverAddress), port, false, null, MqttSslProtocols.None);
-            
+
+            log.Info("Connecting to MQTT Broker at " + serverAddress + ":" + port);
 
             // register to message received 
             client.MqttMsgPublishReceived += client_MqttMsgPublishReceived;
@@ -69,10 +82,11 @@ namespace M2MCaster
             catch(Exception ex)
             {
                 MessageBox.Show(ex.InnerException.Message,ex.Message);
+                log.Error(ex.InnerException.Message + " - " + ex.Message);
             }
 
-            // subscribe to all topics with QoS 2 
-            client.Subscribe(new string[] { "#" }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
+            // subscribe to all topics
+            client.Subscribe(new string[] { "#" }, new byte[] { MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE});
         }
 
 
@@ -82,19 +96,20 @@ namespace M2MCaster
             string topic = e.Topic;
             string flag = e.DupFlag.ToString();
 
-            //MessageBox.Show(msg);
+            log.Info("Message recieved on topic: " + topic);
 
             //Notify the plugins
             foreach (var item in _Plugins)
             {
                 IPlugin plug = _Plugins[item.Key];
-                plug.Message(topic, flag);
+                plug.Message(topic, msg);
                 
             }
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
+            log.Info("Loading plugins");
             PlugInLoader<IPlugin> loader = new PlugInLoader<IPlugin>(e.Argument.ToString());
 
             _Plugins = new Dictionary<string, IPlugin>();
@@ -104,6 +119,7 @@ namespace M2MCaster
             foreach (var plugin in plugins)
             {
                 _Plugins.Add(plugin.Name, plugin);
+                log.Info("Loaded plugin: " + plugin.Name);
             }
         }
 
@@ -118,7 +134,7 @@ namespace M2MCaster
             if (client.IsConnected)
             {
                 client.Disconnect();
-                Console.WriteLine("Disconnecting"); //TODO: send to a real log file (log4net)
+                log.Info("Disconnected from MQTT Broker");
             }
                 
         }
